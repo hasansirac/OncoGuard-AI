@@ -1,0 +1,6 @@
+@OncoGuard.WebAPI_HostAddress = http://localhost:5080
+
+GET {{OncoGuard.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

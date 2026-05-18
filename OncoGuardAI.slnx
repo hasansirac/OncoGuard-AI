@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="OncoGuard.Application/OncoGuard.Application.csproj" />
+  <Project Path="OncoGuard.Domain/OncoGuard.Domain.csproj" />
+  <Project Path="OncoGuard.Infrastructure/OncoGuard.Infrastructure.csproj" />
+  <Project Path="OncoGuard.WebAPI/OncoGuard.WebAPI.csproj" />
+</Solution>
