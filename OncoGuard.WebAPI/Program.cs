@@ -8,6 +8,8 @@ using OncoGuard.Infrastructure.Services.Auth;
 using OncoGuard.Infrastructure.Services.DailyLogs;
 using OncoGuard.Infrastructure.Services.FoodLogs;
 using OncoGuard.Infrastructure.Services.Labs;
+using OncoGuard.Application.Interfaces.Features;
+using OncoGuard.Infrastructure.Services.Features;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,9 @@ builder.Services.AddScoped<ILabService, LabService>();
 builder.Services.AddScoped<IDailyLogService, DailyLogService>();
 
 builder.Services.AddScoped<IFoodLogService, FoodLogService>();
+
+builder.Services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
