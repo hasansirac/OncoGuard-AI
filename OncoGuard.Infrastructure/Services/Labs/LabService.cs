@@ -92,9 +92,20 @@ public class LabService : ILabService
 
         if (activeCycle != null)
         {
+            var baselineLab = await _context.LabResults
+                .FirstOrDefaultAsync(l => l.Id == activeCycle.BaselineLabId);
+
             activeCycle.Status = CycleStatus.Closed;
             activeCycle.EndDate = request.LabDate;
-            activeCycle.CycleSummary = "Cycle closed after new lab result was entered.";
+
+            if (baselineLab != null)
+            {
+                activeCycle.CycleSummary = GenerateLabComparisonSummary(baselineLab, labResult);
+            }
+            else
+            {
+                activeCycle.CycleSummary = "Cycle closed after new lab result was entered. Baseline lab was not found for comparison.";
+            }
         }
 
         var newCycle = new LabCycle
@@ -109,5 +120,52 @@ public class LabService : ILabService
 
         await _context.LabCycles.AddAsync(newCycle);
         await _context.SaveChangesAsync();
+    }
+    private string GenerateLabComparisonSummary(LabResult oldLab, LabResult newLab)
+    {
+        var summaryParts = new List<string>();
+
+        void CompareValue(string name, double? oldValue, double? newValue, bool increaseIsBad = false, bool decreaseIsBad = false)
+        {
+            if (oldValue == null || newValue == null)
+                return;
+
+            if (newValue > oldValue)
+            {
+                var message = $"{name} increased from {oldValue} to {newValue}.";
+                if (increaseIsBad)
+                    message += " This may indicate worsening.";
+                summaryParts.Add(message);
+            }
+            else if (newValue < oldValue)
+            {
+                var message = $"{name} decreased from {oldValue} to {newValue}.";
+                if (decreaseIsBad)
+                    message += " This may indicate worsening.";
+                summaryParts.Add(message);
+            }
+            else
+            {
+                summaryParts.Add($"{name} remained stable at {newValue}.");
+            }
+        }
+
+        CompareValue("ANC", oldLab.Anc, newLab.Anc, decreaseIsBad: true);
+        CompareValue("WBC", oldLab.Wbc, newLab.Wbc, decreaseIsBad: true);
+        CompareValue("Hemoglobin", oldLab.Hemoglobin, newLab.Hemoglobin, decreaseIsBad: true);
+        CompareValue("Platelet", oldLab.Platelet, newLab.Platelet, decreaseIsBad: true);
+
+        CompareValue("CRP", oldLab.Crp, newLab.Crp, increaseIsBad: true);
+        CompareValue("Creatinine", oldLab.Creatinine, newLab.Creatinine, increaseIsBad: true);
+        CompareValue("eGFR", oldLab.Egfr, newLab.Egfr, decreaseIsBad: true);
+
+        CompareValue("AST", oldLab.Ast, newLab.Ast, increaseIsBad: true);
+        CompareValue("ALT", oldLab.Alt, newLab.Alt, increaseIsBad: true);
+        CompareValue("Albumin", oldLab.Albumin, newLab.Albumin, decreaseIsBad: true);
+
+        if (!summaryParts.Any())
+            return "No comparable lab values were available.";
+
+        return string.Join(" ", summaryParts);
     }
 }

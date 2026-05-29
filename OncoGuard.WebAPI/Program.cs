@@ -1,15 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using OncoGuard.Application.Interfaces.Auth;
+using OncoGuard.Application.Interfaces.ClinicalReports;
 using OncoGuard.Application.Interfaces.DailyLogs;
+using OncoGuard.Application.Interfaces.Features;
 using OncoGuard.Application.Interfaces.FoodLogs;
 using OncoGuard.Application.Interfaces.Labs;
+using OncoGuard.Application.Interfaces.RiskExplanations;
+using OncoGuard.Application.Interfaces.Rules;
 using OncoGuard.Infrastructure.Persistence;
 using OncoGuard.Infrastructure.Services.Auth;
+using OncoGuard.Infrastructure.Services.ClinicalReports;
 using OncoGuard.Infrastructure.Services.DailyLogs;
+using OncoGuard.Infrastructure.Services.Features;
 using OncoGuard.Infrastructure.Services.FoodLogs;
 using OncoGuard.Infrastructure.Services.Labs;
-using OncoGuard.Application.Interfaces.Features;
-using OncoGuard.Infrastructure.Services.Features;
+using OncoGuard.Infrastructure.Services.RiskExplanations;
+using OncoGuard.Infrastructure.Services.Rules;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +34,12 @@ builder.Services.AddScoped<IDailyLogService, DailyLogService>();
 builder.Services.AddScoped<IFoodLogService, FoodLogService>();
 
 builder.Services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
+
+builder.Services.AddScoped<IRuleEngineService, RuleEngineService>();
+
+builder.Services.AddScoped<IRiskExplanationService, RiskExplanationService>();
+
+builder.Services.AddScoped<IClinicalReportService, ClinicalReportService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
