@@ -1,7 +1,45 @@
-bin/
-obj/
-.vs/
+# ──────────────────────────────────────────────────────────────
+# OncoGuard-AI — root .gitignore (monorepo)
+# ──────────────────────────────────────────────────────────────
+
+# ===== Secrets / local config =====
+**/appsettings.Development.json
+**/appsettings.Local.json
+*.env
+.env
+secrets.json
+
+# ===== .NET / backend =====
+**/bin/
+**/obj/
+**/.vs/
 *.user
 *.suo
 *.cache
-appsettings.Development.json
+*.dll
+*.pdb
+
+# ===== Python / ai-service =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ===== Android / android-patient =====
+**/build/
+**/.gradle/
+**/.idea/
+**/.kotlin/
+local.properties
+*.iml
+*.keystore
+*.jks
+
+# ===== OS / editor =====
+.DS_Store
+Thumbs.db
+*.swp
+*~

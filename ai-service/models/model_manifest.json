@@ -1,0 +1,189 @@
+{
+  "project": "OncoGuardAI",
+  "model_family": "XGBoost",
+  "version": "v2.1-balanced-15k",
+  "description": "Ten separate XGBoost models for oncology risk prediction.",
+  "dataset_version": "v2.1-balanced",
+  "dataset_rows": 14998,
+  "train_rows": 11998,
+  "test_rows": 3000,
+  "feature_count": 87,
+  "trained_at": "2026-06-04T20:16:41",
+  "balancing": "scenario weights + per-scenario severe ratio; sample_weight=balanced",
+  "risk_level_encoding": {
+    "ai": "0-3 (Green..Red)",
+    "backend": "1-4 (map gerekli)"
+  },
+  "risk_models": {
+    "InfectionRisk": {
+      "target_column": "label_InfectionRisk",
+      "model_file": "infectionrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.803,
+        "macro_f1": 0.697,
+        "red_precision": 0.662,
+        "red_recall": 0.653,
+        "red_f1": 0.658
+      }
+    },
+    "FebrileNeutropeniaRisk": {
+      "target_column": "label_FebrileNeutropeniaRisk",
+      "model_file": "febrileneutropeniarisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.935,
+        "macro_f1": 0.745,
+        "red_precision": 0.811,
+        "red_recall": 0.889,
+        "red_f1": 0.848
+      }
+    },
+    "MalnutritionRisk": {
+      "target_column": "label_MalnutritionRisk",
+      "model_file": "malnutritionrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.874,
+        "macro_f1": 0.747,
+        "red_precision": 0.741,
+        "red_recall": 0.769,
+        "red_f1": 0.755
+      }
+    },
+    "CachexiaRisk": {
+      "target_column": "label_CachexiaRisk",
+      "model_file": "cachexiarisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.946,
+        "macro_f1": 0.705,
+        "red_precision": 0.58,
+        "red_recall": 0.607,
+        "red_f1": 0.594
+      }
+    },
+    "DehydrationRisk": {
+      "target_column": "label_DehydrationRisk",
+      "model_file": "dehydrationrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.885,
+        "macro_f1": 0.752,
+        "red_precision": 0.765,
+        "red_recall": 0.818,
+        "red_f1": 0.791
+      }
+    },
+    "RenalToxicityRisk": {
+      "target_column": "label_RenalToxicityRisk",
+      "model_file": "renaltoxicityrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.89,
+        "macro_f1": 0.704,
+        "red_precision": 0.701,
+        "red_recall": 0.736,
+        "red_f1": 0.718
+      }
+    },
+    "HepaticToxicityRisk": {
+      "target_column": "label_HepaticToxicityRisk",
+      "model_file": "hepatictoxicityrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.924,
+        "macro_f1": 0.673,
+        "red_precision": 0.64,
+        "red_recall": 0.848,
+        "red_f1": 0.729
+      }
+    },
+    "ImmunotherapyAdverseEventRisk": {
+      "target_column": "label_ImmunotherapyAdverseEventRisk",
+      "model_file": "immunotherapyadverseeventrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.963,
+        "macro_f1": 0.736,
+        "red_precision": 0.786,
+        "red_recall": 0.872,
+        "red_f1": 0.827
+      }
+    },
+    "TreatmentDelayRisk": {
+      "target_column": "label_TreatmentDelayRisk",
+      "model_file": "treatmentdelayrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.795,
+        "macro_f1": 0.697,
+        "red_precision": 0.722,
+        "red_recall": 0.848,
+        "red_f1": 0.78
+      }
+    },
+    "OverallClinicalDeteriorationRisk": {
+      "target_column": "label_OverallClinicalDeteriorationRisk",
+      "model_file": "overallclinicaldeteriorationrisk_xgb.joblib",
+      "classes": {
+        "0": "Green",
+        "1": "Yellow",
+        "2": "Orange",
+        "3": "Red"
+      },
+      "metrics": {
+        "accuracy": 0.657,
+        "macro_f1": 0.643,
+        "red_precision": 0.777,
+        "red_recall": 0.752,
+        "red_f1": 0.764
+      }
+    }
+  }
+}

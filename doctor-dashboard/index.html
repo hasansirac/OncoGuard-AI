@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONCOGUARD-AI · Clinical Decision Support</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#16212e; --panel-2:#1c2a3a; --line:#26384c;
+    --ink:#e8eef5; --ink-dim:#93a4b8; --ink-faint:#5e7088;
+    --teal:#1fb6a6; --teal-deep:#0c6b62; --accent:#3da9fc;
+    --green:#22c55e; --yellow:#eab308; --orange:#f97316; --red:#ef4444;
+    --green-bg:rgba(34,197,94,.12); --yellow-bg:rgba(234,179,8,.12);
+    --orange-bg:rgba(249,115,22,.13); --red-bg:rgba(239,68,68,.14);
+    --radius:14px; --shadow:0 10px 40px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%, rgba(31,182,166,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(61,169,252,.08), transparent 55%),var(--bg);
+    color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .auth-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:36px 34px;box-shadow:var(--shadow)}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .brand .mark{width:42px;height:42px;border-radius:11px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--teal),var(--teal-deep));
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(31,182,166,.35)}
+  .brand .mark svg{width:24px;height:24px}
+  .brand h1{font-size:19px;letter-spacing:.3px;font-weight:700}
+  .brand h1 span{color:var(--teal)}
+  .auth-sub{color:var(--ink-dim);font-size:13px;margin:14px 0 24px;line-height:1.5}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:7px;letter-spacing:.3px}
+  .field input,.field select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    padding:12px 14px;border-radius:10px;font-size:14px;transition:border-color .15s,box-shadow .15s}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,182,166,.15)}
+  .field select{cursor:pointer}
+  .btn{width:100%;border:none;cursor:pointer;font-size:14px;font-weight:600;letter-spacing:.3px;
+    padding:13px;border-radius:10px;color:#04130f;background:linear-gradient(135deg,var(--teal),#15a193);
+    transition:transform .08s, filter .15s}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.6;cursor:default}
+  .auth-msg{font-size:12.5px;margin-top:12px;min-height:16px}
+  .auth-msg.err{color:var(--red)} .auth-msg.ok{color:var(--green)}
+  .auth-switch{margin-top:20px;font-size:13px;color:var(--ink-dim);text-align:center}
+  .auth-switch a{color:var(--teal);cursor:pointer;font-weight:600;text-decoration:none}
+  .auth-switch a:hover{text-decoration:underline}
+  .form-hide{display:none}
+
+  .app{display:none;min-height:100vh;grid-template-rows:auto 1fr}
+  .app.active{display:grid}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;
+    border-bottom:1px solid var(--line);background:rgba(22,33,46,.7);backdrop-filter:blur(8px);
+    position:sticky;top:0;z-index:5}
+  .topbar .brand h1{font-size:16px}
+  .topbar .mark{width:34px;height:34px;border-radius:9px}.topbar .mark svg{width:19px;height:19px}
+  .top-right{display:flex;align-items:center;gap:18px}
+  .doc-chip{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}
+  .doc-chip .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2563eb);
+    display:grid;place-items:center;font-weight:700;color:#fff;font-size:13px}
+  .logout{background:none;border:1px solid var(--line);color:var(--ink-dim);padding:7px 14px;
+    border-radius:8px;font-size:12.5px;cursor:pointer;transition:.15s}
+  .logout:hover{border-color:var(--red);color:var(--red)}
+  .layout{display:grid;grid-template-columns:296px 1fr;gap:0;min-height:0}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}}
+  .sidebar{border-right:1px solid var(--line);padding:20px 16px;overflow:auto;max-height:calc(100vh - 64px)}
+  .side-title{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-faint);
+    margin:4px 6px 14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .side-title .cnt{color:var(--teal)}
+  .patient{display:flex;align-items:center;gap:12px;padding:12px;border-radius:11px;cursor:pointer;
+    border:1px solid transparent;transition:.15s;margin-bottom:6px}
+  .patient:hover{background:var(--panel)}
+  .patient.active{background:var(--panel);border-color:var(--teal)}
+  .patient .pav{width:38px;height:38px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
+    font-weight:700;font-size:14px;background:var(--panel-2);color:var(--teal)}
+  .patient .pmeta{min-width:0}
+  .patient .pname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .patient .psub{font-size:12px;color:var(--ink-faint);margin-top:2px}
+  .side-empty{color:var(--ink-faint);font-size:13px;padding:14px 8px;line-height:1.5}
+  .main{padding:24px 28px;overflow:auto;max-height:calc(100vh - 64px)}
+  .patient-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:22px}
+  .ph-left h2{font-size:21px;font-weight:700;margin-bottom:10px}
+  .ph-tags{display:flex;gap:10px;flex-wrap:wrap}
+  .tag{font-size:12px;color:var(--ink-dim);background:var(--panel-2);border:1px solid var(--line);padding:5px 11px;border-radius:20px}
+  .tag b{color:var(--ink);font-weight:600}
+  .evaluate-btn{border:none;cursor:pointer;font-weight:600;font-size:14px;letter-spacing:.2px;
+    padding:13px 22px;border-radius:11px;color:#04130f;white-space:nowrap;
+    background:linear-gradient(135deg,var(--teal),#15a193);box-shadow:0 8px 22px rgba(31,182,166,.30);
+    transition:transform .08s,filter .15s;display:flex;align-items:center;gap:9px}
+  .evaluate-btn:hover{filter:brightness(1.07)}.evaluate-btn:active{transform:translateY(1px)}
+  .evaluate-btn:disabled{opacity:.6;cursor:default;filter:none}.evaluate-btn svg{width:17px;height:17px}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px}
+  @media (max-width:720px){.summary{grid-template-columns:repeat(2,1fr)}}
+  .sum-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .sum-card .n{font-size:26px;font-weight:800;line-height:1}
+  .sum-card .l{font-size:12px;color:var(--ink-dim);margin-top:7px;letter-spacing:.3px}
+  .sum-card.red .n{color:var(--red)}.sum-card.orange .n{color:var(--orange)}
+  .sum-card.yellow .n{color:var(--yellow)}.sum-card.green .n{color:var(--green)}
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--ink-faint);
+    font-weight:700;margin:26px 4px 14px}
+  .risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .risk-card{background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:12px;
+    padding:16px 17px;transition:transform .12s, box-shadow .12s}
+  .risk-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.28)}
+  .risk-card.green{border-left-color:var(--green)}.risk-card.yellow{border-left-color:var(--yellow)}
+  .risk-card.orange{border-left-color:var(--orange)}.risk-card.red{border-left-color:var(--red)}
+  .rc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .rc-name{font-size:14.5px;font-weight:600;line-height:1.3}
+  .rc-badge{font-size:11px;font-weight:700;letter-spacing:.5px;padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .rc-badge.green{color:var(--green);background:var(--green-bg)}.rc-badge.yellow{color:var(--yellow);background:var(--yellow-bg)}
+  .rc-badge.orange{color:var(--orange);background:var(--orange-bg)}.rc-badge.red{color:var(--red);background:var(--red-bg)}
+  .rc-conf{font-size:12px;color:var(--ink-dim);margin-bottom:10px}.rc-conf b{color:var(--ink);font-size:13px}
+  .bars{display:flex;flex-direction:column;gap:6px}
+  .bar-row{display:grid;grid-template-columns:54px 1fr 42px;align-items:center;gap:8px;font-size:11px;color:var(--ink-faint)}
+  .bar-track{height:7px;background:var(--bg);border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .bar-fill.green{background:var(--green)}.bar-fill.yellow{background:var(--yellow)}
+  .bar-fill.orange{background:var(--orange)}.bar-fill.red{background:var(--red)}
+  .bar-val{text-align:right;color:var(--ink-dim)}
+  .rc-flags{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+  .flag{font-size:10.5px;font-weight:600;letter-spacing:.3px;padding:4px 9px;border-radius:7px;display:flex;align-items:center;gap:5px}
+  .flag.critical{color:var(--red);background:var(--red-bg)}.flag.review{color:var(--orange);background:var(--orange-bg)}
+  .rc-explain{margin-top:13px;padding-top:13px;border-top:1px solid var(--line);font-size:12px;line-height:1.55}
+  .rc-ex-primary{color:var(--ink);font-weight:600;margin-bottom:7px}
+  .rc-ex-context{color:var(--ink-dim);margin-bottom:9px}
+  .rc-ex-context b{color:var(--ink-dim);font-weight:700}
+  .rc-ex-action{display:flex;align-items:flex-start;gap:7px;color:var(--teal);font-weight:500;font-size:11.5px}
+  .rc-ex-action svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px}
+  .risk-card.red .rc-ex-action{color:var(--red)}
+  .risk-card.orange .rc-ex-action{color:var(--orange)}
+  /* Monitoring (izleniyor) karti */
+  .risk-card.monitoring{border-left-color:var(--ink-faint);opacity:.92}
+  .rc-badge.monitoring{color:var(--ink-dim);background:rgba(147,164,184,.14);letter-spacing:.5px}
+  .rc-monitor-msg{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:12px}
+  .rc-monitor-msg b{color:var(--ink)}
+  .monitor-track{height:8px;background:var(--bg);border-radius:6px;overflow:hidden;margin-bottom:9px}
+  .monitor-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--ink-faint),var(--ink-dim));transition:width .6s ease}
+  .rc-monitor-sub{font-size:11.5px;color:var(--ink-faint);line-height:1.5}
+  .risk-card.monitoring .rc-explain{border-top-color:var(--line)}
+  .risk-card.monitoring .rc-ex-context{color:var(--ink-faint)}
+
+  /* Clinical profile form */
+  .clinical-note{font-size:12.5px;color:var(--ink-dim);line-height:1.55;margin-bottom:18px;
+    background:rgba(61,169,252,.08);border:1px solid rgba(61,169,252,.20);border-radius:11px;padding:12px 14px}
+  .clinical-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:var(--ink-faint);
+    font-weight:700;margin:18px 2px 12px}
+  .clinical-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .comorbidity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .comorbidity-option{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--line);
+    color:var(--ink);padding:10px 12px;border-radius:10px;font-size:13px;cursor:pointer;user-select:none}
+  .comorbidity-option:hover{border-color:var(--teal)}
+  .comorbidity-option input{width:auto;accent-color:var(--teal)}
+  .comorbidity-help{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.45}
+
+  .status-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px}
+  .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .status-card{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;line-height:1.45}
+  .status-card.ok{border-color:rgba(34,197,94,.45)}
+  .status-card.warn{border-color:rgba(234,179,8,.50)}
+  .status-card.bad{border-color:rgba(239,68,68,.55)}
+  .status-title{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-faint);font-weight:700;margin-bottom:6px}
+  .status-main{font-size:14px;font-weight:700;color:var(--ink)}
+  .status-sub{font-size:12px;color:var(--ink-dim);margin-top:5px}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.45px;border-radius:999px;padding:4px 9px;margin-left:6px}
+  .status-pill.ok{color:var(--green);background:var(--green-bg)}
+  .status-pill.warn{color:var(--yellow);background:var(--yellow-bg)}
+  .status-pill.bad{color:var(--red);background:var(--red-bg)}
+  .safety-note{background:rgba(61,169,252,.09);border:1px solid rgba(61,169,252,.35);border-radius:12px;padding:12px 14px;color:var(--ink-dim);font-size:12.5px;line-height:1.55;margin-bottom:14px}
+  .danger-note{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.35);border-radius:12px;padding:12px 14px;color:#fecaca;font-size:12.5px;line-height:1.55;margin-bottom:14px}
+
+  .mini-btn{border:none;cursor:pointer;font-weight:600;font-size:14px;letter-spacing:.2px;
+    padding:11px 18px;border-radius:10px;color:#04130f;background:linear-gradient(135deg,var(--teal),#15a193)}
+  .mini-btn.secondary{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line)}
+  .mini-btn:disabled{opacity:.6;cursor:default}
+  .lab-field select,.lab-field textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    padding:10px 12px;border-radius:9px;font-size:14px;font-family:inherit}
+  .lab-field textarea{min-height:78px;resize:vertical}
+  .lab-field select:focus,.lab-field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,182,166,.15)}
+
+  /* Lab girme formu */
+  .lab-form{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px}
+  .lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+  .lab-field label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px}
+  .lab-field .lab-unit{color:var(--ink-faint);font-size:11px}
+  .lab-field input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    padding:10px 12px;border-radius:9px;font-size:14px}
+  .lab-field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,182,166,.15)}
+  .empty{display:grid;place-items:center;padding:70px 20px;text-align:center;color:var(--ink-faint)}
+  .empty svg{width:54px;height:54px;margin-bottom:18px;opacity:.5}
+  .empty h3{font-size:17px;color:var(--ink-dim);font-weight:600;margin-bottom:8px}
+  .empty p{font-size:13.5px;max-width:360px;line-height:1.6}
+  .spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--teal);
+    border-radius:50%;animation:spin .8s linear infinite;margin-bottom:18px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .risk-card{animation:fadeUp .35s ease both}
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH (login + register) ===== -->
+<div class="auth-wrap" id="authView">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#04130f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a9 9 0 0 0-9 9c0 5 4 8 9 11 5-3 9-6 9-11a9 9 0 0 0-9-9Z"/><path d="M12 8v6M9 11h6"/></svg></div>
+      <h1>ONCOGUARD<span>·AI</span></h1>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <p class="auth-sub">Clinician portal. Sign in to access your patients and risk assessments.</p>
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" value="" autocomplete="off"></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPassword" value=""></div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+      <div class="auth-msg err" id="loginMsg"></div>
+      <div class="auth-switch">Don't have an account? <a onclick="showRegister()">Create one</a></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" class="form-hide">
+      <p class="auth-sub">Create a clinician account. Select your hospital to register.</p>
+      <div class="field"><label>Full name</label><input type="text" id="regUsername" placeholder="Dr. Jane Doe"></div>
+      <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="name@hospital.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="Choose a password"></div>
+      <div class="field"><label>Hospital</label><select id="regHospital"><option value="">Loading hospitals...</option></select></div>
+      <button class="btn" id="registerBtn" onclick="doRegister()">Create Account</button>
+      <div class="auth-msg" id="registerMsg"></div>
+      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app" id="appView">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#04130f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a9 9 0 0 0-9 9c0 5 4 8 9 11 5-3 9-6 9-11a9 9 0 0 0-9-9Z"/><path d="M12 8v6M9 11h6"/></svg></div>
+      <h1>ONCOGUARD<span style="color:var(--teal)">·AI</span></h1>
+    </div>
+    <div class="top-right">
+      <div class="doc-chip"><div class="av" id="docAv">D</div><span id="docName">Doctor</span></div>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-title">My Patients <span class="cnt" id="patientCount"></span></div>
+      <div id="patientList"></div>
+    </aside>
+    <main class="main" id="mainPanel"></main>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — point this at your running backend
+============================================================ */
+const API_BASE = "https://localhost:7235";
+
+let TOKEN = null;
+let activeDoctorId = null;
+let activePatientId = null;
+let patients = [];
+
+const RISK_LABELS = {
+  InfectionRisk:"Infection", FebrileNeutropeniaRisk:"Febrile Neutropenia",
+  MalnutritionRisk:"Malnutrition", CachexiaRisk:"Cachexia", DehydrationRisk:"Dehydration",
+  RenalToxicityRisk:"Renal Toxicity", HepaticToxicityRisk:"Hepatic Toxicity",
+  ImmunotherapyAdverseEventRisk:"Immunotherapy Adverse Event",
+  TreatmentDelayRisk:"Treatment Delay", OverallClinicalDeteriorationRisk:"Overall Deterioration"
+};
+
+/* Clinical explanation for each risk:
+   primary = the dominant driver(s); context = the additional features the model also weighs
+   (reinforces that the model evaluates the full 87-feature profile, not just 1-2 values);
+   action = suggested clinical action when the risk is elevated. */
+const RISK_EXPLAIN = {
+  InfectionRisk:{
+    primary:"Driven primarily by fever, low neutrophil count (ANC) and elevated CRP occurring together.",
+    context:"The model also weighs infection symptoms (cough, diarrhea, rash), the CRP/albumin ratio, antibiotic use, comorbidities such as diabetes, and patient age.",
+    action:"Consider an infection workup and close monitoring of temperature and CRP."
+  },
+  FebrileNeutropeniaRisk:{
+    primary:"Driven primarily by the combination of fever and a low absolute neutrophil count — neither alone is sufficient.",
+    context:"The model also considers 7-day fever frequency, platelet count, prior neutropenia, GCSF (growth-factor) use and treatment type.",
+    action:"Urgent evaluation; consider empirical antibiotics per institutional protocol."
+  },
+  MalnutritionRisk:{
+    primary:"Driven primarily by insufficient protein intake combined with low albumin.",
+    context:"The model also weighs the calorie ratio, appetite trend, meal-skipping, recent weight and ECOG performance status.",
+    action:"Nutritional support and a dietitian referral are recommended."
+  },
+  CachexiaRisk:{
+    primary:"Driven primarily by significant weight loss over time.",
+    context:"The model also considers BMI, albumin, protein intake, appetite, age and cancer type.",
+    action:"Assess body composition; consider nutritional and metabolic support."
+  },
+  DehydrationRisk:{
+    primary:"Driven primarily by low fluid intake together with fluid loss from vomiting or diarrhea.",
+    context:"The model also weighs the fluid-loss score, dizziness, diarrhea trend and creatinine.",
+    action:"Assess hydration status; consider fluid replacement."
+  },
+  RenalToxicityRisk:{
+    primary:"Driven primarily by an elevated creatinine grade.",
+    context:"The model interprets this in context — chronic kidney disease history, hydration status, age and nephrotoxic treatment type — so the same creatinine value can mean different risk in different patients.",
+    action:"Review nephrotoxic agents and hydration; monitor renal function."
+  },
+  HepaticToxicityRisk:{
+    primary:"Driven primarily by elevated AST and ALT grades.",
+    context:"The model also weighs bilirubin, liver-disease history and treatment type.",
+    action:"Review hepatotoxic agents; monitor liver function tests."
+  },
+  ImmunotherapyAdverseEventRisk:{
+    primary:"Driven primarily by immune-mediated symptoms (rash, diarrhea, dyspnea) under immunotherapy.",
+    context:"This risk is gated on treatment type; the model also weighs oxygen saturation, skin-rash trend and comorbidities.",
+    action:"Evaluate for immune-related adverse events; consider steroids per protocol."
+  },
+  TreatmentDelayRisk:{
+    primary:"Driven primarily by low neutrophil and/or platelet counts.",
+    context:"The model also weighs hemoglobin, prior treatment delay, dose reduction and general condition.",
+    action:"Re-evaluate treatment timing based on hematologic recovery."
+  },
+  OverallClinicalDeteriorationRisk:{
+    primary:"Driven by the combination of several simultaneously elevated risks rather than any single value.",
+    context:"The model also weighs age, ECOG performance status, albumin, activity decline and all systemic indicators across the full profile.",
+    action:"A comprehensive clinical review is recommended."
+  }
+};
+const LEVEL_NAME={1:"GREEN",2:"YELLOW",3:"ORANGE",4:"RED"};
+const LEVEL_CLASS={1:"green",2:"yellow",3:"orange",4:"red"};
+
+/* ---- form switching ---- */
+function showRegister(){
+  document.getElementById('loginForm').classList.add('form-hide');
+  document.getElementById('registerForm').classList.remove('form-hide');
+  loadHospitals();
+}
+function showLogin(){
+  document.getElementById('registerForm').classList.add('form-hide');
+  document.getElementById('loginForm').classList.remove('form-hide');
+}
+
+/* ---- decode doctorId from token (sub = userId) — we resolve doctorId via hospital list match ---- */
+function parseJwt(token){
+  try{ return JSON.parse(atob(token.split('.')[1])); }catch(e){ return {}; }
+}
+
+/* ---- REGISTER ---- */
+async function loadHospitals(){
+  const sel = document.getElementById('regHospital');
+  try{
+    const r = await fetch(API_BASE+"/api/Hospitals");
+    const list = await r.json();
+    sel.innerHTML = `<option value="">Select a hospital</option>` +
+      list.map(h=>`<option value="${h.id}">${h.name} — ${h.city}</option>`).join('');
+  }catch(e){
+    sel.innerHTML = `<option value="">Could not load hospitals</option>`;
+  }
+}
+
+async function doRegister(){
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const hospitalId = document.getElementById('regHospital').value;
+  const msg = document.getElementById('registerMsg');
+  msg.className="auth-msg"; msg.textContent="";
+
+  if(!username||!email||!password||!hospitalId){
+    msg.className="auth-msg err"; msg.textContent="Please fill in all fields and select a hospital."; return;
+  }
+  const btn=document.getElementById('registerBtn'); btn.disabled=true; btn.textContent="Creating...";
+  try{
+    const r = await fetch(API_BASE+"/api/Auth/register-doctor",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,email,password,hospitalId:parseInt(hospitalId)})
+    });
+    if(!r.ok){ const t=await r.text(); throw new Error(t||("status "+r.status)); }
+    msg.className="auth-msg ok"; msg.textContent="Account created. You can sign in now.";
+    document.getElementById('loginEmail').value=email;
+    document.getElementById('loginPassword').value=password;
+    setTimeout(showLogin, 1200);
+  }catch(e){
+    msg.className="auth-msg err"; msg.textContent="Registration failed. The email may already be in use.";
+  }finally{ btn.disabled=false; btn.textContent="Create Account"; }
+}
+
+/* ---- LOGIN ---- */
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const msg=document.getElementById('loginMsg'); msg.textContent="";
+  if(!email||!password){ msg.textContent="Email and password are required."; return; }
+  const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent="Signing in...";
+  try{
+    const r = await fetch(API_BASE+"/api/Auth/login",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({email,password})
+    });
+    if(!r.ok){ msg.textContent="Sign-in failed. Please check your credentials."; return; }
+    const data = await r.json();
+    TOKEN = data.token;
+    await enterApp(email);
+  }catch(e){
+    msg.textContent="Cannot reach the server. Is the backend running?";
+  }finally{ btn.disabled=false; btn.textContent="Sign In"; }
+}
+
+/* resolve doctorId: token has userId(sub); we find the doctor whose email matches across hospitals */
+async function resolveDoctorId(email){
+  try{
+    const hospR = await fetch(API_BASE+"/api/Hospitals");
+    const hospitals = await hospR.json();
+    for(const h of hospitals){
+      const dR = await fetch(API_BASE+`/api/Hospitals/${h.id}/doctors`);
+      const docs = await dR.json();
+      const found = docs.find(d=>d.email.toLowerCase()===email.toLowerCase());
+      if(found) return found.id;
+    }
+  }catch(e){}
+  return null;
+}
+
+async function enterApp(email){
+  activeDoctorId = await resolveDoctorId(email);
+  document.getElementById('authView').style.display="none";
+  document.getElementById('appView').classList.add('active');
+  document.getElementById('docAv').textContent=(email[0]||"D").toUpperCase();
+  document.getElementById('docName').textContent=email.split('@')[0];
+  await loadPatients();
+  showSelectPrompt();
+}
+
+function doLogout(){
+  TOKEN=null; activeDoctorId=null; activePatientId=null; patients=[];
+  document.getElementById('appView').classList.remove('active');
+  document.getElementById('authView').style.display="flex";
+  showLogin();
+}
+
+/* ---- PATIENTS ---- */
+async function loadPatients(){
+  const list=document.getElementById('patientList');
+  if(!activeDoctorId){
+    list.innerHTML=`<div class="side-empty">Could not determine your doctor profile. Patients cannot be loaded.</div>`;
+    return;
+  }
+  try{
+    const r = await fetch(API_BASE+`/api/Doctors/${activeDoctorId}/patients`);
+    patients = await r.json();
+    document.getElementById('patientCount').textContent = patients.length;
+    if(!patients.length){
+      list.innerHTML=`<div class="side-empty">No patients are assigned to you yet. Patients appear here once they register and select you as their doctor.</div>`;
+      return;
+    }
+    list.innerHTML = patients.map(p=>`
+      <div class="patient ${p.id===activePatientId?'active':''}" onclick="selectPatient(${p.id})">
+        <div class="pav">${p.name? p.name[0].toUpperCase() : p.id}</div>
+        <div class="pmeta">
+          <div class="pname">${p.name||('Patient #'+p.id)}</div>
+          <div class="psub">${p.age} yrs · ${p.cancerType}</div>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    list.innerHTML=`<div class="side-empty">Could not load patients.</div>`;
+  }
+}
+
+async function selectPatient(id){
+  activePatientId=id; loadPatients();
+  const p = patients.find(x=>x.id===id);
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="patient-head">
+      <div class="ph-left">
+        <h2>${p.name||('Patient #'+p.id)}</h2>
+        <div class="ph-tags">
+          <span class="tag">Patient ID <b>${p.id}</b></span>
+          <span class="tag">Age <b>${p.age}</b></span>
+          <span class="tag">Sex <b>${p.gender}</b></span>
+          <span class="tag">Cancer <b>${p.cancerType}</b></span>
+          <span class="tag">Treatment <b>${p.treatmentType}</b></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="evaluate-btn" id="labBtn" onclick="openLabForm(${p.id})" style="background:linear-gradient(135deg,#3da9fc,#2563eb)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v2l-1 1v4l5 9a2 2 0 0 1-2 3H7a2 2 0 0 1-2-3l5-9V6L9 5z"/></svg>
+        Lab Cycle / Results
+      </button>
+      <button class="evaluate-btn" id="clinicalBtn" onclick="openClinicalProfileForm(${p.id})" style="background:linear-gradient(135deg,#a855f7,#7c3aed)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4M10 13h4"/></svg>
+        Clinical Profile
+      </button>
+      <button class="evaluate-btn" id="evalBtn" onclick="runAssessment(${p.id})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        Run Risk Assessment
+      </button>
+      </div>
+    </div>
+    <div id="readinessPanel" class="status-panel">
+      <div class="empty" style="padding:18px"><div class="spinner"></div><h3>Loading patient readiness</h3><p>Checking lab cycle, clinical profile and daily-entry status...</p></div>
+    </div>
+    <div id="resultArea">
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+        <h3>Awaiting assessment</h3>
+        <p>Run a risk assessment to send this patient's latest data to the AI service and compute the ten clinical risks.</p>
+      </div>
+    </div>`;
+  await loadReadinessPanel(id);
+}
+
+async function loadReadinessPanel(patientId){
+  const holder=document.getElementById('readinessPanel');
+  if(!holder) return;
+  let entry=null, clinical=null, lab=null;
+  try{
+    const [entryR, clinicalR, labR] = await Promise.all([
+      fetch(API_BASE+`/api/PatientDailyEntryStatus/patient/${patientId}`,{headers:{"Authorization":"Bearer "+TOKEN}}),
+      fetch(API_BASE+`/api/ClinicalProfiles/patient/${patientId}`,{headers:{"Authorization":"Bearer "+TOKEN}}),
+      fetch(API_BASE+`/api/Labs/patient/${patientId}/active-cycle`,{headers:{"Authorization":"Bearer "+TOKEN}})
+    ]);
+    entry = entryR.ok ? await entryR.json() : null;
+    clinical = clinicalR.ok ? await clinicalR.json() : null;
+    lab = labR.ok ? await labR.json() : null;
+  }catch(e){}
+
+  const cp = clinical?.cancerProfile;
+  const tp = clinical?.treatmentPlan;
+  const labOk = lab?.hasActiveCycle === true;
+  const cpOk = !!cp && !!tp;
+  const entryOk = entry?.canEnterDailyData === true;
+  const missing = entry?.missingItems || [];
+  holder.innerHTML = `
+    <div class="safety-note">
+      <b>Patient readiness check:</b> Daily monitoring is opened only after the doctor completes the clinical profile, treatment plan and active baseline lab cycle. This prevents patient-entered data from being evaluated with missing or wrong clinical baseline.
+    </div>
+    <div class="status-grid">
+      <div class="status-card ${cpOk?'ok':'bad'}">
+        <div class="status-title">Clinical profile</div>
+        <div class="status-main">${cpOk?'Completed':'Missing'} <span class="status-pill ${cpOk?'ok':'bad'}">${cpOk?'READY':'REQUIRED'}</span></div>
+        <div class="status-sub">${cpOk ? `Last update: ${formatDateTime(cp.updatedDate || cp.createdDate)} · ECOG ${cp.ecogPerformanceScore} · ${cp.comorbidities}` : 'Doctor must enter cancer stage, ECOG, comorbidities and treatment history.'}</div>
+      </div>
+      <div class="status-card ${labOk?'ok':'bad'}">
+        <div class="status-title">Active lab cycle</div>
+        <div class="status-main">${labOk?'Active baseline exists':'No active baseline'} <span class="status-pill ${labOk?'ok':'bad'}">${labOk?'READY':'REQUIRED'}</span></div>
+        <div class="status-sub">${labOk ? `Cycle #${lab.activeCycle.id} · ${lab.cycleLengthDays || 21}-day window · Baseline: ${formatDateTime(lab.baselineLab.labDate)} · End: ${formatDateTime(lab.plannedCycleEndDate)} · ANC ${lab.baselineLab.anc ?? '-'} · WBC ${lab.baselineLab.wbc ?? '-'}` : 'Doctor must create the first baseline lab cycle before patient daily monitoring starts.'}</div>
+      </div>
+      <div class="status-card ${entryOk?'ok':'warn'}">
+        <div class="status-title">Patient daily entry</div>
+        <div class="status-main">${entryOk?'Open':'Locked'} <span class="status-pill ${entryOk?'ok':'warn'}">${entryOk?'CAN ENTER':'WAITING'}</span></div>
+        <div class="status-sub">${entryOk ? 'Patient can submit daily symptoms, nutrition, hydration and medication data.' : ('Missing: '+(missing.length?missing.join(', '):'doctor-entered data'))}</div>
+      </div>
+    </div>`;
+}
+
+function formatDateTime(v){
+  if(!v) return '-';
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return String(v);
+  return d.toLocaleString();
+}
+
+// ---- LAB GIRME (tahlil) ----
+const LAB_FIELDS = [
+  { key:"anc", label:"ANC (Neutrophils)", unit:"×10³/µL", ph:"e.g. 1.5", required:true },
+  { key:"wbc", label:"WBC", unit:"×10³/µL", ph:"e.g. 4.0", required:true },
+  { key:"lymphocyte", label:"Lymphocyte", unit:"×10³/µL", ph:"e.g. 1.2", required:true },
+  { key:"monocyte", label:"Monocyte", unit:"×10³/µL", ph:"e.g. 0.4", required:true },
+  { key:"crp", label:"CRP", unit:"mg/L", ph:"e.g. 45", required:true },
+  { key:"esr", label:"ESR", unit:"mm/h", ph:"e.g. 30", required:true },
+  { key:"procalcitonin", label:"Procalcitonin", unit:"ng/mL", ph:"e.g. 0.08", required:true },
+  { key:"hemoglobin", label:"Hemoglobin", unit:"g/dL", ph:"e.g. 10.5", required:true },
+  { key:"hematocrit", label:"Hematocrit", unit:"%", ph:"e.g. 34", required:true },
+  { key:"platelet", label:"Platelet", unit:"×10³/µL", ph:"e.g. 140", required:true },
+  { key:"mcv", label:"MCV", unit:"fL", ph:"e.g. 85", required:true },
+  { key:"rdw", label:"RDW", unit:"%", ph:"e.g. 14", required:true },
+  { key:"creatinine", label:"Creatinine", unit:"mg/dL", ph:"e.g. 1.1", required:true },
+  { key:"urea", label:"Urea", unit:"mg/dL", ph:"e.g. 30", required:true },
+  { key:"egfr", label:"eGFR", unit:"mL/min", ph:"e.g. 90", required:true },
+  { key:"sodium", label:"Sodium", unit:"mmol/L", ph:"e.g. 140", required:true },
+  { key:"potassium", label:"Potassium", unit:"mmol/L", ph:"e.g. 4.2", required:true },
+  { key:"magnesium", label:"Magnesium", unit:"mg/dL", ph:"e.g. 2.0", required:true },
+  { key:"calcium", label:"Calcium", unit:"mg/dL", ph:"e.g. 9.2", required:true },
+  { key:"chloride", label:"Chloride", unit:"mmol/L", ph:"e.g. 102", required:true },
+  { key:"ast", label:"AST", unit:"U/L", ph:"e.g. 35", required:true },
+  { key:"alt", label:"ALT", unit:"U/L", ph:"e.g. 30", required:true },
+  { key:"alp", label:"ALP", unit:"U/L", ph:"e.g. 90", required:true },
+  { key:"ggt", label:"GGT", unit:"U/L", ph:"e.g. 40", required:true },
+  { key:"totalBilirubin", label:"Total Bilirubin", unit:"mg/dL", ph:"e.g. 0.8", required:true },
+  { key:"directBilirubin", label:"Direct Bilirubin", unit:"mg/dL", ph:"e.g. 0.2", required:true },
+  { key:"ldh", label:"LDH", unit:"U/L", ph:"e.g. 220", required:true },
+  { key:"albumin", label:"Albumin", unit:"g/dL", ph:"e.g. 3.1", required:true },
+  { key:"totalProtein", label:"Total Protein", unit:"g/dL", ph:"e.g. 6.5", required:true },
+  { key:"prealbumin", label:"Prealbumin", unit:"mg/dL", ph:"e.g. 20", required:true },
+  { key:"ferritin", label:"Ferritin", unit:"ng/mL", ph:"e.g. 100", required:true },
+  { key:"iron", label:"Iron", unit:"µg/dL", ph:"e.g. 70", required:true },
+  { key:"transferrinSaturation", label:"Transferrin Saturation", unit:"%", ph:"e.g. 25", required:true },
+  { key:"vitaminB12", label:"Vitamin B12", unit:"pg/mL", ph:"e.g. 400", required:true },
+  { key:"folate", label:"Folate", unit:"ng/mL", ph:"e.g. 8", required:true },
+  { key:"vitaminD", label:"Vitamin D", unit:"ng/mL", ph:"e.g. 30", required:true },
+  { key:"zinc", label:"Zinc", unit:"µg/dL", ph:"e.g. 80", required:true },
+  { key:"selenium", label:"Selenium", unit:"µg/L", ph:"e.g. 100", required:true },
+  { key:"tsh", label:"TSH", unit:"mIU/L", ph:"e.g. 2.0", required:true },
+  { key:"freeT4", label:"Free T4", unit:"ng/dL", ph:"e.g. 1.2", required:true },
+  { key:"glucose", label:"Glucose", unit:"mg/dL", ph:"e.g. 95", required:true },
+  { key:"morningCortisol", label:"Morning Cortisol", unit:"µg/dL", ph:"e.g. 12", required:true },
+  { key:"amylase", label:"Amylase", unit:"U/L", ph:"e.g. 60", required:true },
+  { key:"lipase", label:"Lipase", unit:"U/L", ph:"e.g. 35", required:true }
+];
+
+async function openLabForm(patientId){
+  const p = patients.find(x=>x.id===patientId);
+  let labStatus=null;
+  try{
+    const r = await fetch(API_BASE+`/api/Labs/patient/${patientId}/active-cycle`,{headers:{"Authorization":"Bearer "+TOKEN}});
+    if(r.ok) labStatus = await r.json();
+  }catch(e){}
+  const hasActive = labStatus?.hasActiveCycle === true;
+  const current = labStatus?.baselineLab || {};
+  const fieldsHtml = LAB_FIELDS.map(f=>`
+    <div class="lab-field">
+      <label>${f.label} <span class="lab-unit">${f.unit}</span>${f.required?' <span style="color:#ef4444">*</span>':''}</label>
+      <input type="number" step="any" id="lab_${f.key}" placeholder="${f.ph}" value="${current[f.key] ?? ''}">
+    </div>`).join('');
+
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="patient-head">
+      <div class="ph-left">
+        <h2>Lab Cycle / Results — ${p.name||('Patient #'+p.id)}</h2>
+        <div class="ph-tags">
+          <span class="tag">Patient ID <b>${p.id}</b></span>
+          <span class="tag">Cancer <b>${p.cancerType}</b></span>
+          <span class="tag">Treatment <b>${p.treatmentType}</b></span>
+        </div>
+      </div>
+      <button class="evaluate-btn" onclick="selectPatient(${patientId})" style="background:var(--panel-2);color:var(--ink-dim)">
+        ← Back
+      </button>
+    </div>
+    <div class="lab-form">
+      <div class="${hasActive?'safety-note':'danger-note'}">
+        <b>${hasActive?'Active lab cycle exists':'No active lab cycle yet'}.</b>
+        ${hasActive ? `Current active cycle #${labStatus.activeCycle.id} runs as a ${labStatus.cycleLengthDays || 21}-day monitoring window from ${formatDateTime(labStatus.cycleStartDate || labStatus.activeCycle.startDate)} to ${formatDateTime(labStatus.plannedCycleEndDate || labStatus.activeCycle.endDate)}. Use <b>Correct current baseline</b> only for a wrong date/value. Use <b>Start new lab cycle</b> only for a later follow-up lab result.` : 'This patient is still locked for daily entry. Saving this baseline result will create the first active monitoring cycle.'}
+      </div>
+      <div class="status-grid" style="margin-bottom:14px">
+        <div class="status-card ${hasActive?'ok':'bad'}">
+          <div class="status-title">Mode explanation</div>
+          <div class="status-main">${hasActive?'Update existing baseline or start new cycle':'Create first baseline cycle'}</div>
+          <div class="status-sub">New cycle changes the AI baseline and opens a new 21-day monitoring calendar. Correct current baseline keeps the same cycle and is only for typo/date correction.</div>
+        </div>
+        <div class="status-card ${hasActive?'ok':'warn'}">
+          <div class="status-title">Current baseline</div>
+          <div class="status-main">${hasActive?'Available':'Missing'}</div>
+          <div class="status-sub">${hasActive ? `ANC ${current.anc ?? '-'} · WBC ${current.wbc ?? '-'} · CRP ${current.crp ?? '-'} · Albumin ${current.albumin ?? '-'}` : 'Enter the first baseline lab values below.'}</div>
+        </div>
+      </div>
+
+      <div class="status-grid" style="margin-bottom:14px">
+        <div class="status-card ok">
+          <div class="status-title">Lab file import</div>
+          <div class="status-main">CSV import is optional</div>
+          <div class="status-sub">Upload a structured CSV file to fill the lab form automatically. Imported values are not saved until the doctor reviews and confirms them.</div>
+        </div>
+        <div class="status-card warn">
+          <div class="status-title">Safety rule</div>
+          <div class="status-main">Doctor confirmation required</div>
+          <div class="status-sub">The file only fills the form. The doctor can still edit values manually before creating a baseline cycle or correcting the current baseline.</div>
+        </div>
+      </div>
+      <div class="lab-field" style="grid-column:1/-1;margin-bottom:14px">
+        <label>Upload structured lab CSV</label>
+        <input type="file" id="lab_csv_file" accept=".csv,text/csv" onchange="handleLabCsvUpload(event)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <button type="button" class="mini-btn secondary" onclick="downloadLabCsvTemplate()">Download CSV Template</button>
+          <button type="button" class="mini-btn secondary" onclick="clearImportedLabValues()">Clear Imported Values</button>
+        </div>
+        <div class="status-sub" style="margin-top:8px">
+          Supported format: a one-row CSV containing all required lab columns plus labDate and cycleLengthDays. A fully-filled sample with every required field (sample_baseline_lab.csv) is included in this folder.
+        </div>
+        <div class="auth-msg" id="labImportMsg"></div>
+      </div>
+
+      <div class="lab-grid">${fieldsHtml}</div>
+      <div class="lab-field"><label>Lab date / Cycle start <span style="color:#ef4444">*</span></label><input type="date" id="lab_labDate" value="${current.labDate ? dateForInput(current.labDate) : ""}"></div>
+      <div class="lab-field"><label>Monitoring cycle length <span style="color:#ef4444">*</span></label><select id="lab_cycleLength"><option value="21" selected>21 days (default chemotherapy cycle)</option><option value="28">28 days</option></select></div>
+      <div class="lab-field" style="grid-column:1/-1"><label>Notes</label><textarea id="lab_notes" placeholder="Optional note, e.g. baseline before cycle 2 or correction of previous typo."></textarea></div>
+      <div class="auth-msg" id="labMsg"></div>
+      <div class="clinical-actions">
+        <button class="mini-btn" id="labNewCycleBtn" onclick="submitLab(${patientId}, 'new')">${hasActive?'Start New Lab Cycle':'Create Baseline Lab Cycle'}</button>
+        ${hasActive ? `<button class="mini-btn secondary" id="labCorrectBtn" onclick="submitLab(${patientId}, 'correct')">Correct Current Baseline</button>` : ''}
+        <button class="mini-btn secondary" onclick="selectPatient(${patientId})">Cancel</button>
+      </div>
+    </div>`;
+}
+
+
+// ---- STRUCTURED LAB CSV IMPORT ----
+// This is intentionally client-side only. The CSV fills the lab form, but it does NOT save anything.
+// The doctor must review values and press Create Baseline Lab Cycle / Correct Current Baseline.
+function normalizeLabHeader(h){
+  return String(h || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[µμ]/g,'u')
+    .replace(/[^a-z0-9]/g,'');
+}
+
+function buildLabHeaderMap(){
+  const map = {};
+  LAB_FIELDS.forEach(f=>{
+    const labelOnly = f.label.replace(/\(.*?\)/g,'').trim();
+    [f.key, f.label, labelOnly].forEach(x=> map[normalizeLabHeader(x)] = f.key);
+  });
+  const aliases = {
+    anc:'anc', neutrophils:'anc', absoluteNeutrophilCount:'anc', absoluteneutrophilcount:'anc',
+    wbc:'wbc', whitebloodcell:'wbc', whitebloodcells:'wbc',
+    lymphocytes:'lymphocyte', lymphocytecount:'lymphocyte',
+    monocytes:'monocyte', monocytecount:'monocyte',
+    crp:'crp', cReactiveProtein:'crp', creactiveprotein:'crp',
+    esr:'esr', sedimentation:'esr',
+    pct:'procalcitonin', procalcitonin:'procalcitonin',
+    hb:'hemoglobin', hgb:'hemoglobin', hemoglobin:'hemoglobin',
+    hct:'hematocrit', hematocrit:'hematocrit',
+    plt:'platelet', platelets:'platelet', platelet:'platelet',
+    mcv:'mcv', rdw:'rdw',
+    creatinine:'creatinine', crea:'creatinine',
+    urea:'urea', bun:'urea',
+    egfr:'egfr', gfr:'egfr',
+    na:'sodium', sodium:'sodium',
+    k:'potassium', potassium:'potassium',
+    mg:'magnesium', magnesium:'magnesium',
+    ca:'calcium', calcium:'calcium',
+    cl:'chloride', chloride:'chloride',
+    ast:'ast', alt:'alt', alp:'alp', ggt:'ggt',
+    bilirubin:'totalBilirubin', totalbilirubin:'totalBilirubin', tbil:'totalBilirubin', totalbil:'totalBilirubin',
+    directbilirubin:'directBilirubin', dbil:'directBilirubin', directbil:'directBilirubin',
+    ldh:'ldh', albumin:'albumin', alb:'albumin',
+    totalprotein:'totalProtein', protein:'totalProtein',
+    prealbumin:'prealbumin', ferritin:'ferritin', iron:'iron',
+    transferrinsaturation:'transferrinSaturation', transferrinsat:'transferrinSaturation', tsat:'transferrinSaturation',
+    vitaminb12:'vitaminB12', b12:'vitaminB12', folate:'folate',
+    vitamind:'vitaminD', vitd:'vitaminD',
+    zinc:'zinc', selenium:'selenium',
+    tsh:'tsh', freet4:'freeT4', ft4:'freeT4',
+    glucose:'glucose', sugar:'glucose',
+    morningcortisol:'morningCortisol', cortisol:'morningCortisol',
+    amylase:'amylase', lipase:'lipase'
+  };
+  Object.keys(aliases).forEach(k=> map[normalizeLabHeader(k)] = aliases[k]);
+  map['labdate'] = 'labDate';
+  map['date'] = 'labDate';
+  map['sampledate'] = 'labDate';
+  map['cycledate'] = 'labDate';
+  map['cyclestart'] = 'labDate';
+  map['cyclestartdate'] = 'labDate';
+  map['cyclelengthdays'] = 'cycleLengthDays';
+  map['cyclelength'] = 'cycleLengthDays';
+  map['monitoringcyclelength'] = 'cycleLengthDays';
+  map['notes'] = 'notes';
+  map['note'] = 'notes';
+  return map;
+}
+
+function splitCsvLine(line, delimiter){
+  const out=[]; let cur=''; let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(inQuotes && line[i+1]==='"'){ cur+='"'; i++; }
+      else inQuotes=!inQuotes;
+    }else if(ch===delimiter && !inQuotes){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out.map(v=>v.trim().replace(/^"|"$/g,''));
+}
+
+function parseSimpleCsv(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(x=>x.trim().length>0);
+  if(lines.length < 2) throw new Error('CSV must include a header row and one data row.');
+  const first = lines[0];
+  const commaCount = (first.match(/,/g)||[]).length;
+  const semiCount = (first.match(/;/g)||[]).length;
+  const delimiter = semiCount > commaCount ? ';' : ',';
+  const headers = splitCsvLine(lines[0], delimiter);
+  const values = splitCsvLine(lines[1], delimiter);
+  const row = {};
+  headers.forEach((h,i)=> row[h] = values[i] ?? '');
+  return row;
+}
+
+function normalizeNumberValue(v){
+  let s = String(v ?? '').trim();
+  if(!s) return '';
+  // Accept Turkish-style decimal comma only when there is no dot.
+  if(s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
+  s = s.replace(/\s/g,'');
+  return s;
+}
+
+function isoDateForInput(v){
+  const raw = String(v ?? '').trim();
+  if(!raw) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const m = raw.match(/^(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{4})$/);
+  if(m){
+    const dd = m[1].padStart(2,'0');
+    const mm = m[2].padStart(2,'0');
+    return `${m[3]}-${mm}-${dd}`;
+  }
+  const d = new Date(raw);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return raw;
+}
+
+async function handleLabCsvUpload(event){
+  const file = event.target.files && event.target.files[0];
+  const msg = document.getElementById('labImportMsg');
+  if(!file) return;
+  msg.className='auth-msg'; msg.textContent='Reading lab file...';
+  try{
+    const text = await file.text();
+    const row = parseSimpleCsv(text);
+    const headerMap = buildLabHeaderMap();
+    const mapped=[]; const unmapped=[]; const invalid=[];
+    Object.entries(row).forEach(([header,value])=>{
+      const key = headerMap[normalizeLabHeader(header)];
+      if(!key){ unmapped.push(header); return; }
+      if(key === 'labDate'){
+        const el = document.getElementById('lab_labDate');
+        if(el){ el.value = isoDateForInput(value); mapped.push('labDate'); }
+        return;
+      }
+      if(key === 'cycleLengthDays'){
+        const el = document.getElementById('lab_cycleLength');
+        if(el && String(value).trim()){
+          const v = parseInt(value);
+          if(v === 21 || v === 28){ el.value = String(v); mapped.push('cycleLengthDays'); }
+          else invalid.push('cycleLengthDays must be 21 or 28');
+        }
+        return;
+      }
+      if(key === 'notes'){
+        const el = document.getElementById('lab_notes');
+        if(el){ el.value = value || ''; mapped.push('notes'); }
+        return;
+      }
+      const el = document.getElementById('lab_'+key);
+      if(el){
+        const nv = normalizeNumberValue(value);
+        if(nv !== '' && isNaN(Number(nv))) invalid.push(`${header} is not numeric`);
+        el.value = nv;
+        mapped.push(key);
+      }
+    });
+    const missingRequired = LAB_FIELDS.filter(f=>!document.getElementById('lab_'+f.key)?.value).map(f=>f.label);
+    let txt = `Imported ${mapped.length} fields from ${file.name}. Please review all values before saving.`;
+    if(unmapped.length) txt += ` Unmapped columns: ${unmapped.join(', ')}.`;
+    if(invalid.length) txt += ` Invalid values: ${invalid.join(', ')}.`;
+    if(missingRequired.length) txt += ` Still missing required fields: ${missingRequired.slice(0,8).join(', ')}${missingRequired.length>8?'...':''}.`;
+    msg.className = invalid.length || missingRequired.length ? 'auth-msg err' : 'auth-msg ok';
+    msg.textContent = txt;
+  }catch(e){
+    msg.className='auth-msg err';
+    msg.textContent='Could not import lab CSV: '+(e.message || e);
+  }
+}
+
+function clearImportedLabValues(){
+  LAB_FIELDS.forEach(f=>{ const el=document.getElementById('lab_'+f.key); if(el) el.value=''; });
+  const labDate=document.getElementById('lab_labDate'); if(labDate) labDate.value='';
+  const notes=document.getElementById('lab_notes'); if(notes) notes.value='';
+  const file=document.getElementById('lab_csv_file'); if(file) file.value='';
+  const msg=document.getElementById('labImportMsg'); if(msg){ msg.className='auth-msg'; msg.textContent='Imported values cleared. You can enter values manually or upload another CSV.'; }
+}
+
+function downloadLabCsvTemplate(){
+  const headers = ['labDate','cycleLengthDays', ...LAB_FIELDS.map(f=>f.key), 'notes'];
+  const values = ['2026-06-12','21', ...LAB_FIELDS.map(f=>''), 'doctor reviews imported values before saving'];
+  const csv = headers.join(',') + '\n' + values.join(',') + '\n';
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'oncoguard_lab_template.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function submitLab(patientId, mode){
+  const p = patients.find(x=>x.id===patientId);
+  const msg=document.getElementById('labMsg');
+  msg.className="auth-msg"; msg.textContent="";
+  const labDateInput = document.getElementById('lab_labDate').value;
+  const missing=[];
+  const cycleLength = parseInt(document.getElementById('lab_cycleLength')?.value || '21');
+  const body={ patientId: patientId, labDate: labDateInput ? new Date(labDateInput+'T00:00:00').toISOString() : null, cycleLengthDays: cycleLength, notes: document.getElementById('lab_notes').value || null };
+  if(!labDateInput){ missing.push('Lab date'); }
+  LAB_FIELDS.forEach(f=>{
+    const v=document.getElementById('lab_'+f.key).value;
+    if(v!==""){ body[f.key]=parseFloat(v); }
+    else if(f.required){ missing.push(f.label); }
+  });
+  if(missing.length){
+    msg.className="auth-msg err";
+    msg.textContent="Required lab values are missing: " + missing.join(", ") + ". These are essential for risk calculation.";
+    return;
+  }
+
+  const actionText = mode === 'correct'
+    ? `Correct the CURRENT active baseline lab for ${p.name || ('Patient #'+patientId)}? This will not create a new cycle.`
+    : `Start a NEW active ${body.cycleLengthDays}-day lab cycle for ${p.name || ('Patient #'+patientId)}? Previous active cycle will be closed and AI will use this result as the new baseline.`;
+  if(!confirm(actionText)) return;
+
+  const newBtn=document.getElementById('labNewCycleBtn');
+  const corrBtn=document.getElementById('labCorrectBtn');
+  if(newBtn) newBtn.disabled=true;
+  if(corrBtn) corrBtn.disabled=true;
+  try{
+    const url = mode === 'correct'
+      ? API_BASE+`/api/Labs/patient/${patientId}/active-baseline`
+      : API_BASE+"/api/Labs";
+    const method = mode === 'correct' ? 'PUT' : 'POST';
+    const r = await fetch(url,{
+      method,
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+TOKEN },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok){ const t=await r.text(); throw new Error(t||("status "+r.status)); }
+    msg.className="auth-msg ok";
+    msg.textContent = mode === 'correct'
+      ? "Current baseline lab corrected. No new cycle was created."
+      : "Lab result saved. A new active monitoring cycle has started.";
+    setTimeout(()=>selectPatient(patientId), 1200);
+  }catch(e){
+    msg.className="auth-msg err"; msg.textContent="Could not save lab result. " + (e.message || 'Please try again.');
+  }finally{
+    if(newBtn) newBtn.disabled=false;
+    if(corrBtn) corrBtn.disabled=false;
+  }
+}
+
+// ---- CLINICAL PROFILE (doktor klinik profil / tedavi plani girisi) ----
+const CANCER_TYPES = [
+  {value:1,label:"Lung"}, {value:2,label:"Breast"}, {value:3,label:"Colon"},
+  {value:4,label:"Prostate"}, {value:5,label:"Other"}
+];
+const TREATMENT_TYPES = [
+  {value:1,label:"Chemotherapy"}, {value:2,label:"Radiotherapy"}, {value:3,label:"Immunotherapy"},
+  {value:4,label:"Targeted Therapy"}, {value:5,label:"Hormone Therapy"}
+];
+const COMORBIDITY_OPTIONS = [
+  {value:"none", label:"No known comorbidity"},
+  {value:"diabetes", label:"Diabetes"},
+  {value:"hypertension", label:"Hypertension"},
+  {value:"chronic kidney disease", label:"Chronic kidney disease"},
+  {value:"heart failure", label:"Heart failure"},
+  {value:"copd", label:"COPD / asthma"},
+  {value:"liver disease", label:"Liver disease"}
+];
+function normalizeComorbidityToken(v){
+  const x = String(v||'').trim().toLowerCase();
+  if(['none','no','no known comorbidity','no comorbidity'].includes(x)) return 'none';
+  if(['diabetes','diabetes mellitus','dm'].includes(x)) return 'diabetes';
+  if(['hypertension','htn','high blood pressure'].includes(x)) return 'hypertension';
+  if(['chronic kidney disease','ckd','renal disease','kidney disease'].includes(x)) return 'chronic kidney disease';
+  if(['heart failure','chf','cardiac failure'].includes(x)) return 'heart failure';
+  if(['copd','asthma','chronic obstructive pulmonary disease'].includes(x)) return 'copd';
+  if(['liver disease','cirrhosis','hepatic disease'].includes(x)) return 'liver disease';
+  return x;
+}
+function parseComorbiditiesExisting(text){
+  return String(text||'').split(/[,;|]/).map(normalizeComorbidityToken).filter(Boolean);
+}
+function comorbidityPickerHtml(existing){
+  const selected = parseComorbiditiesExisting(existing);
+  return `<div class="lab-field" style="grid-column:1/-1">
+    <label>Comorbidities</label>
+    <div class="comorbidity-grid">
+      ${COMORBIDITY_OPTIONS.map(o=>`
+        <label class="comorbidity-option">
+          <input type="checkbox" class="cp-comorbidity" value="${o.value}" ${selected.includes(o.value)?'checked':''} onchange="handleComorbidityChange(this)">
+          <span>${o.label}</span>
+        </label>`).join('')}
+    </div>
+    <div class="comorbidity-help">Select only predefined conditions. If the patient has no known comorbidity, select “No known comorbidity”. Free text is not accepted because the AI feature mapping must stay consistent.</div>
+  </div>`;
+}
+function handleComorbidityChange(changed){
+  const boxes = [...document.querySelectorAll('.cp-comorbidity')];
+  if(changed.value === 'none' && changed.checked){
+    boxes.forEach(b=>{ if(b.value !== 'none') b.checked = false; });
+  }
+  if(changed.value !== 'none' && changed.checked){
+    const none = boxes.find(b=>b.value === 'none');
+    if(none) none.checked = false;
+  }
+}
+function getSelectedComorbidities(){
+  const selected = [...document.querySelectorAll('.cp-comorbidity:checked')].map(x=>x.value);
+  if(selected.length === 0) return null;
+  if(selected.includes('none') && selected.length > 1) return null;
+  return selected.join(', ');
+}
+
+function opts(list, selected, placeholder='Select...'){
+  const hasValue = selected !== null && selected !== undefined && selected !== '';
+  return `<option value="" ${!hasValue?'selected':''}>${placeholder}</option>` + list.map(x=>`<option value="${x.value}" ${parseInt(selected)===x.value?'selected':''}>${x.label}</option>`).join('');
+}
+function boolSelect(id, label, value){
+  const hasValue = value === true || value === false || value === 'true' || value === 'false' || value === 1 || value === 0;
+  const selected = value===true || value==='true' || value===1;
+  return `<div class="lab-field"><label>${label} <span style="color:#ef4444">*</span></label><select id="${id}">
+    <option value="" ${!hasValue?'selected':''}>Select...</option>
+    <option value="false" ${hasValue && !selected?'selected':''}>No</option>
+    <option value="true" ${hasValue && selected?'selected':''}>Yes</option>
+  </select></div>`;
+}
+function valOr(v, fallback=""){
+  return (v===null || v===undefined) ? fallback : v;
+}
+function dateForInput(v){
+  if(!v) return "";
+  const d = new Date(v);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return String(v).slice(0,10);
+}
+function asBool(id){ const v=document.getElementById(id).value; return v === '' ? null : v === 'true'; }
+function asInt(id){ const v=document.getElementById(id).value; return v === '' ? null : parseInt(v, 10); }
+function asText(id){ return document.getElementById(id).value.trim(); }
+function asDateIso(id){
+  const v=document.getElementById(id).value;
+  return v ? new Date(v+"T00:00:00").toISOString() : null;
+}
+
+async function openClinicalProfileForm(patientId){
+  const p = patients.find(x=>x.id===patientId);
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="patient-head">
+      <div class="ph-left">
+        <h2>Clinical Profile — ${p.name||('Patient #'+p.id)}</h2>
+        <div class="ph-tags">
+          <span class="tag">Doctor-confirmed clinical data</span>
+          <span class="tag">Used by AI risk assessment</span>
+        </div>
+      </div>
+      <button class="evaluate-btn" onclick="selectPatient(${patientId})" style="background:var(--panel-2);color:var(--ink-dim)">
+        ← Back
+      </button>
+    </div>
+    <div class="empty"><div class="spinner"></div><h3>Loading clinical profile</h3><p>Fetching cancer profile and treatment plan...</p></div>`;
+
+  try{
+    const r = await fetch(API_BASE+`/api/ClinicalProfiles/patient/${patientId}`,{
+      headers:{ "Authorization":"Bearer "+TOKEN }
+    });
+    if(!r.ok) throw new Error("status "+r.status);
+    const data = await r.json();
+    renderClinicalProfileForm(patientId, data);
+  }catch(e){
+    // Endpoint yoksa veya profil henuz olusmadiysa bos form ac
+    renderClinicalProfileForm(patientId, {patientId, cancerProfile:null, treatmentPlan:null});
+  }
+}
+
+function renderClinicalProfileForm(patientId, data){
+  const p = patients.find(x=>x.id===patientId);
+  const cp = data.cancerProfile || {};
+  const tp = data.treatmentPlan || {};
+  const defaultDiagnosis = dateForInput(cp.diagnosisDate) || '';
+  const defaultLastTreatment = dateForInput(tp.lastTreatmentDate) || '';
+  const defaultNextTreatment = dateForInput(tp.nextPlannedTreatmentDate) || '';
+
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="patient-head">
+      <div class="ph-left">
+        <h2>Clinical Profile — ${p.name||('Patient #'+p.id)}</h2>
+        <div class="ph-tags">
+          <span class="tag">Age <b>${p.age}</b></span>
+          <span class="tag">Cancer <b>${p.cancerType}</b></span>
+          <span class="tag">Treatment <b>${p.treatmentType}</b></span>
+          <span class="tag">Mode <b>${(data.cancerProfile && data.treatmentPlan) ? 'Editing existing profile' : 'Creating new profile'}</b></span>
+          ${(data.cancerProfile || data.treatmentPlan) ? `<span class="tag">Last update <b>${formatDateTime((data.cancerProfile?.updatedDate || data.cancerProfile?.createdDate || data.treatmentPlan?.updatedDate || data.treatmentPlan?.createdDate))}</b></span>` : ``}
+        </div>
+      </div>
+      <button class="evaluate-btn" onclick="selectPatient(${patientId})" style="background:var(--panel-2);color:var(--ink-dim)">
+        ← Back
+      </button>
+    </div>
+
+    <div class="lab-form">
+      <div class="safety-note">
+        <b>You are editing clinical data for ${p.name||("Patient #"+p.id)} / Patient ID ${p.id}.</b> These values are doctor-confirmed and directly affect AI risk calculation. Comorbidities are selected from predefined options only; free text is blocked.
+      </div>
+      <div class="clinical-note">
+        Patient-entered daily data covers symptoms, nutrition, hydration and medication adherence. The doctor confirms cancer stage, ECOG, comorbidities and treatment history here.
+      </div>
+
+      <div class="clinical-section-title">Cancer & General Clinical Profile</div>
+      <div class="lab-grid">
+        <div class="lab-field"><label>Cancer Type <span style="color:#ef4444">*</span></label><select id="cp_cancerType">${opts(CANCER_TYPES, cp.cancerType, "Select cancer type...")}</select></div>
+        <div class="lab-field"><label>Stage <span style="color:#ef4444">*</span></label><select id="cp_stage"><option value="" ${!cp.stage?'selected':''}>Select stage...</option>${['Stage I','Stage II','Stage III','Stage IV'].map(x=>`<option value="${x}" ${valOr(cp.stage,'')===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        ${boolSelect('cp_hasMetastasis','Has Metastasis', cp.hasMetastasis)}
+        <div class="lab-field"><label>Diagnosis Date <span style="color:#ef4444">*</span></label><input type="date" id="cp_diagnosisDate" value="${defaultDiagnosis}"></div>
+        <div class="lab-field"><label>ECOG Performance Score <span style="color:#ef4444">*</span></label><select id="cp_ecog"><option value="" ${(cp.ecogPerformanceScore===null||cp.ecogPerformanceScore===undefined)?'selected':''}>Select ECOG...</option>${[0,1,2,3,4].map(x=>`<option value="${x}" ${parseInt(valOr(cp.ecogPerformanceScore,''))===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div class="lab-field"><label>Treatment Goal</label><select id="cp_treatmentGoal">
+          <option value="" ${!cp.treatmentGoal?'selected':''}>Select treatment goal...</option>${['Curative','Palliative','Adjuvant','Neoadjuvant','Maintenance'].map(x=>`<option value="${x}" ${valOr(cp.treatmentGoal,'')===x?'selected':''}>${x}</option>`).join('')}
+        </select></div>
+        <div class="lab-field"><label>Smoking Status</label><select id="cp_smokingStatus">
+          <option value="" ${!cp.smokingStatus?'selected':''}>Select smoking status...</option>${['Never smoker','Former smoker','Current smoker'].map(x=>`<option value="${x}" ${valOr(cp.smokingStatus,'')===x?'selected':''}>${x}</option>`).join('')}
+        </select></div>
+        <div class="lab-field"><label>Alcohol Status</label><select id="cp_alcoholStatus">
+          <option value="" ${!cp.alcoholStatus?'selected':''}>Select alcohol status...</option>${['No alcohol','Occasional','Regular'].map(x=>`<option value="${x}" ${valOr(cp.alcoholStatus,'')===x?'selected':''}>${x}</option>`).join('')}
+        </select></div>
+        ${comorbidityPickerHtml(cp.comorbidities)}
+      </div>
+
+      <div class="clinical-section-title">Treatment Plan & History</div>
+      <div class="lab-grid">
+        <div class="lab-field"><label>Treatment Type <span style="color:#ef4444">*</span></label><select id="tp_treatmentType">${opts(TREATMENT_TYPES, tp.treatmentType, "Select treatment type...")}</select></div>
+        <div class="lab-field"><label>Protocol Name <span style="color:#ef4444">*</span></label><input id="tp_protocolName" value="${valOr(tp.protocolName,'')}" placeholder="e.g. FOLFOX / oncology protocol"></div>
+        <div class="lab-field"><label>Cycle Number <span style="color:#ef4444">*</span></label><input type="number" min="1" id="tp_cycleNumber" value="${valOr(tp.cycleNumber,'')}"></div>
+        <div class="lab-field"><label>Last Treatment Date <span style="color:#ef4444">*</span></label><input type="date" id="tp_lastTreatmentDate" value="${defaultLastTreatment}"></div>
+        <div class="lab-field"><label>Next Planned Treatment Date <span style="color:#ef4444">*</span></label><input type="date" id="tp_nextTreatmentDate" value="${defaultNextTreatment}"></div>
+        ${boolSelect('tp_previousNeutropenia','Previous Neutropenia', tp.hasPreviousNeutropenia)}
+        ${boolSelect('tp_gcsf','G-CSF Support', tp.usesGcsfSupport)}
+        ${boolSelect('tp_antibiotic','Antibiotic Use', tp.usesAntibiotic)}
+        ${boolSelect('tp_steroid','Steroid Use', tp.usesSteroid)}
+        ${boolSelect('tp_antiemetic','Antiemetic Use', tp.usesAntiemetic)}
+        ${boolSelect('tp_painkiller','Painkiller Use', tp.usesPainkiller)}
+        ${boolSelect('tp_doseReduction','Dose Reduction', tp.hasDoseReduction)}
+        ${boolSelect('tp_treatmentDelay','Previous Treatment Delay', tp.hadPreviousTreatmentDelay)}
+      </div>
+      <div class="auth-msg" id="clinicalMsg"></div>
+      <div class="clinical-actions">
+        <button class="mini-btn" id="clinicalSaveBtn" onclick="submitClinicalProfile(${patientId})">Save Clinical Profile</button>
+        <button class="mini-btn secondary" onclick="selectPatient(${patientId})">Cancel</button>
+      </div>
+    </div>`;
+}
+
+async function submitClinicalProfile(patientId){
+  const msg=document.getElementById('clinicalMsg');
+  msg.className='auth-msg'; msg.textContent='';
+
+  const selectedComorbidities = getSelectedComorbidities();
+  if(!selectedComorbidities){
+    msg.className='auth-msg err';
+    msg.textContent='Please select at least one valid comorbidity option, or select No known comorbidity.';
+    return;
+  }
+
+  const requiredClinical = [
+    ['cp_cancerType','Cancer type'], ['cp_stage','Cancer stage'], ['cp_hasMetastasis','Metastasis status'],
+    ['cp_diagnosisDate','Diagnosis date'], ['cp_ecog','ECOG performance score'], ['cp_treatmentGoal','Treatment goal'],
+    ['cp_smokingStatus','Smoking status'], ['cp_alcoholStatus','Alcohol status'], ['tp_treatmentType','Treatment type'],
+    ['tp_protocolName','Protocol name'], ['tp_cycleNumber','Cycle number'], ['tp_lastTreatmentDate','Last treatment date'],
+    ['tp_nextTreatmentDate','Next planned treatment date'], ['tp_previousNeutropenia','Previous neutropenia'],
+    ['tp_gcsf','G-CSF support'], ['tp_antibiotic','Antibiotic use'], ['tp_steroid','Steroid use'],
+    ['tp_antiemetic','Antiemetic use'], ['tp_painkiller','Painkiller use'], ['tp_doseReduction','Dose reduction'],
+    ['tp_treatmentDelay','Previous treatment delay']
+  ];
+  const missingRequired = requiredClinical.filter(([id])=>{
+    const el=document.getElementById(id);
+    return !el || String(el.value||'').trim()==='';
+  }).map(x=>x[1]);
+  if(missingRequired.length){
+    msg.className='auth-msg err';
+    msg.textContent='Please complete all required doctor-entered fields: ' + missingRequired.join(', ');
+    return;
+  }
+
+  const body={
+    patientId: patientId,
+    cancerType: asInt('cp_cancerType'),
+    stage: asText('cp_stage') || 'Stage III',
+    hasMetastasis: asBool('cp_hasMetastasis'),
+    diagnosisDate: asDateIso('cp_diagnosisDate'),
+    comorbidities: selectedComorbidities,
+    smokingStatus: asText('cp_smokingStatus'),
+    alcoholStatus: asText('cp_alcoholStatus'),
+    ecogPerformanceScore: asInt('cp_ecog'),
+    treatmentGoal: asText('cp_treatmentGoal') || 'Curative',
+    treatmentType: asInt('tp_treatmentType'),
+    protocolName: asText('tp_protocolName') || 'Oncology treatment protocol',
+    cycleNumber: asInt('tp_cycleNumber'),
+    lastTreatmentDate: asDateIso('tp_lastTreatmentDate'),
+    nextPlannedTreatmentDate: asDateIso('tp_nextTreatmentDate'),
+    hasPreviousNeutropenia: asBool('tp_previousNeutropenia'),
+    usesGcsfSupport: asBool('tp_gcsf'),
+    usesAntibiotic: asBool('tp_antibiotic'),
+    usesSteroid: asBool('tp_steroid'),
+    usesAntiemetic: asBool('tp_antiemetic'),
+    usesPainkiller: asBool('tp_painkiller'),
+    hasDoseReduction: asBool('tp_doseReduction'),
+    hadPreviousTreatmentDelay: asBool('tp_treatmentDelay')
+  };
+
+  const p = patients.find(x=>x.id===patientId);
+  if(!confirm(`Save clinical profile for ${p?.name || ('Patient #'+patientId)} / Patient ID ${patientId}? These doctor-entered values will be used by AI risk prediction.`)) return;
+
+  const btn=document.getElementById('clinicalSaveBtn');
+  btn.disabled=true; btn.textContent='Saving...';
+  try{
+    const r = await fetch(API_BASE+'/api/ClinicalProfiles/upsert',{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+TOKEN },
+      body:JSON.stringify(body)
+    });
+    if(!r.ok){ const t=await r.text(); throw new Error(t||('status '+r.status)); }
+    msg.className='auth-msg ok';
+    msg.textContent='Clinical profile saved successfully. Re-run the assessment to use the updated clinical features.';
+    await loadPatients();
+    setTimeout(()=>selectPatient(patientId), 1000);
+  }catch(e){
+    msg.className='auth-msg err';
+    msg.textContent='Could not save clinical profile. ' + (e.message || 'Check the backend and try again.');
+  }finally{
+    btn.disabled=false; btn.textContent='Save Clinical Profile';
+  }
+}
+
+function showSelectPrompt(){
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <h3>Select a patient</h3>
+      <p>Choose a patient from the list on the left to begin a clinical risk assessment.</p>
+    </div>`;
+}
+
+/* ---- EVALUATE ---- */
+async function runAssessment(id){
+  const btn=document.getElementById('evalBtn'); const area=document.getElementById('resultArea');
+  btn.disabled=true; btn.innerHTML=`<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div> Assessing...`;
+  area.innerHTML=`<div class="empty"><div class="spinner"></div><h3>AI assessment in progress</h3><p>Processing patient data and computing ten clinical risks...</p></div>`;
+  try{
+    const r = await fetch(API_BASE+`/api/AiPredictionTest/evaluate/${id}`,{
+      method:"POST", headers:{"Authorization":"Bearer "+TOKEN}
+    });
+    if(!r.ok) throw new Error("status "+r.status);
+    const result = await r.json();
+    renderResult(result);
+  }catch(e){
+    area.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><h3 style="color:var(--red)">Assessment failed</h3><p>Could not reach the AI service. Make sure the FastAPI service is running and you are signed in.</p></div>`;
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> Re-run Assessment`;
+  }
+}
+
+function renderResult(result){
+  const all=Object.values(result.predictions);
+  // Hesaplanan (ok) ve izlenen (monitoring) riskleri ayir
+  const computed=all.filter(p=>p.status!=='monitoring' && p.level_backend!=null);
+  const monitoring=all.filter(p=>p.status==='monitoring' || p.level_backend==null);
+
+  const order={4:0,3:1,2:2,1:3};
+  computed.sort((a,b)=>order[a.level_backend]-order[b.level_backend]);
+  const count={red:0,orange:0,yellow:0,green:0};
+  computed.forEach(p=>count[LEVEL_CLASS[p.level_backend]]++);
+
+  const monitoringHtml = monitoring.length ? `
+    <div class="section-label">Monitoring · Awaiting Sufficient Data (${monitoring.length})</div>
+    <div class="risk-grid">${monitoring.map(p=>monitorCard(p)).join('')}</div>` : '';
+
+  document.getElementById('resultArea').innerHTML = `
+    <div class="summary">
+      <div class="sum-card red"><div class="n">${count.red}</div><div class="l">Critical (Red)</div></div>
+      <div class="sum-card orange"><div class="n">${count.orange}</div><div class="l">High (Orange)</div></div>
+      <div class="sum-card yellow"><div class="n">${count.yellow}</div><div class="l">Moderate (Yellow)</div></div>
+      <div class="sum-card green"><div class="n">${count.green}</div><div class="l">Low (Green)</div></div>
+    </div>
+    <div class="section-label">Risk Assessment · ${computed.length} Evaluated Risk${computed.length===1?'':'s'}</div>
+    <div class="risk-grid">${computed.map((p,i)=>riskCard(p,i)).join('')}</div>
+    ${monitoringHtml}`;
+  requestAnimationFrame(()=>{document.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.w;});});
+}
+
+// "Izleniyor" karti - yeterli gunluk veri yok, henuz hesaplanmadi
+function monitorCard(p){
+  const ex = RISK_EXPLAIN[p.risk];
+  const logged = p.days_logged ?? 0;
+  const required = p.days_required ?? 0;
+  const remaining = Math.max(required - logged, 0);
+  const pct = required>0 ? Math.min((logged/required)*100, 100) : 0;
+  return `<div class="risk-card monitoring">
+      <div class="rc-top"><div class="rc-name">${RISK_LABELS[p.risk]||p.risk}</div>
+      <div class="rc-badge monitoring">MONITORING</div></div>
+      <div class="rc-monitor-msg">Awaiting sufficient data — needs <b>${required} days</b>, <b>${logged}</b> collected so far.</div>
+      <div class="monitor-track"><div class="monitor-fill" style="width:${pct}%"></div></div>
+      <div class="rc-monitor-sub">${remaining} more day${remaining===1?'':'s'} of patient data required before this risk is evaluated.</div>
+      ${ex?`<div class="rc-explain monitoring"><div class="rc-ex-context">${ex.primary}</div></div>`:''}
+    </div>`;
+}
+
+function riskCard(p,i){
+  const cls=LEVEL_CLASS[p.level_backend];
+  const conf=Math.max(...Object.values(p.probabilities));
+  const isRed=p.level_backend===4,isOrange=p.level_backend===3;
+  const bars=['Green','Yellow','Orange','Red'].map(k=>{
+    const v=p.probabilities[k]||0;
+    return `<div class="bar-row"><span>${k}</span>
+      <div class="bar-track"><div class="bar-fill ${k.toLowerCase()}" data-w="${(v*100).toFixed(0)}%"></div></div>
+      <span class="bar-val">${(v*100).toFixed(0)}%</span></div>`;
+  }).join('');
+  const flags=[];
+  if(isRed) flags.push(`<span class="flag critical">● CRITICAL</span>`);
+  if(isRed||isOrange) flags.push(`<span class="flag review">Doctor review required</span>`);
+  const ex = RISK_EXPLAIN[p.risk];
+  const explainHtml = ex ? `
+    <div class="rc-explain ${cls}">
+      <div class="rc-ex-primary">${ex.primary}</div>
+      <div class="rc-ex-context"><b>Full-profile assessment:</b> ${ex.context}</div>
+      <div class="rc-ex-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> ${ex.action}</div>
+    </div>` : '';
+  return `<div class="risk-card ${cls}" style="animation-delay:${i*40}ms">
+      <div class="rc-top"><div class="rc-name">${RISK_LABELS[p.risk]||p.risk}</div>
+      <div class="rc-badge ${cls}">${LEVEL_NAME[p.level_backend]}</div></div>
+      <div class="rc-conf">Model confidence: <b>${(conf*100).toFixed(0)}%</b></div>
+      <div class="bars">${bars}</div>
+      ${explainHtml}
+      ${flags.length?`<div class="rc-flags">${flags.join('')}</div>`:''}
+    </div>`;
+}
+
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>

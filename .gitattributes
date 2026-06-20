@@ -1,0 +1,16 @@
+# Normalize all text files to LF in the repo and on checkout (all platforms).
+* text=auto eol=lf
+
+# Windows batch scripts must stay CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never touch
+*.joblib  binary
+*.csv     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.ipynb   binary
+*.jar     binary
+*.keystore binary

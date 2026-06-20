@@ -1,0 +1,11 @@
+Risk,ModelFile,accuracy,macro_f1,red_precision,red_recall,red_f1
+InfectionRisk,infectionrisk_xgb.joblib,0.803,0.697,0.662,0.653,0.658
+FebrileNeutropeniaRisk,febrileneutropeniarisk_xgb.joblib,0.935,0.745,0.811,0.889,0.848
+MalnutritionRisk,malnutritionrisk_xgb.joblib,0.874,0.747,0.741,0.769,0.755
+CachexiaRisk,cachexiarisk_xgb.joblib,0.946,0.705,0.58,0.607,0.594
+DehydrationRisk,dehydrationrisk_xgb.joblib,0.885,0.752,0.765,0.818,0.791
+RenalToxicityRisk,renaltoxicityrisk_xgb.joblib,0.89,0.704,0.701,0.736,0.718
+HepaticToxicityRisk,hepatictoxicityrisk_xgb.joblib,0.924,0.673,0.64,0.848,0.729
+ImmunotherapyAdverseEventRisk,immunotherapyadverseeventrisk_xgb.joblib,0.963,0.736,0.786,0.872,0.827
+TreatmentDelayRisk,treatmentdelayrisk_xgb.joblib,0.795,0.697,0.722,0.848,0.78
+OverallClinicalDeteriorationRisk,overallclinicaldeteriorationrisk_xgb.joblib,0.657,0.643,0.777,0.752,0.764

@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: "OncoGuard-AI"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: "Özbeyler"
+    given-names: "Hasan Siraç"
+    affiliation: "İstanbul Arel University, Department of Computer Engineering"
+version: "1.0.0"
+date-released: "2026-06-20"
+license: "MIT"
+repository-code: "https://github.com/hasansirac/OncoGuard-AI"
+keywords:
+  - oncology
+  - clinical-decision-support
+  - machine-learning
+  - early-warning
+  - xgboost
+abstract: >
+  OncoGuard-AI is a research/educational prototype for adaptive oncology
+  early warning and clinical decision support: a .NET backend, a Python
+  FastAPI risk-prediction service (10 XGBoost models), an Android patient
+  app and a clinician web dashboard. The bundled dataset is fully synthetic.
+  Not a medical device.

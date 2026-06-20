@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "OncoGuard-AI Synthetic Oncology Dataset (v2.1)"
+message: "If you use this dataset, please cite it as below."
+type: dataset
+authors:
+  - family-names: "Özbeyler"
+    given-names: "Hasan Siraç"
+    affiliation: "İstanbul Arel University, Department of Computer Engineering"
+version: "2.1"
+date-released: "2026-06-04"
+license: "CC-BY-4.0"
+keywords:
+  - oncology
+  - synthetic-data
+  - clinical-decision-support
+  - machine-learning
+  - early-warning
+abstract: >
+  A fully synthetic, deterministically generated dataset (14,998 rows, 87 columns)
+  simulating oncology patients on active treatment, for training early-warning models
+  across ten treatment-related deterioration risks. No real patient data is included.
+  CSV SHA-256: c1cfe9acbaf0e377a2a9dfe034f210857f8bda1964e5d6749c1df7b38de78300
