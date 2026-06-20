@@ -10,6 +10,7 @@
 ![Status](https://img.shields.io/badge/status-research%20prototype-orange)
 ![Models](https://img.shields.io/badge/models-10%20XGBoost-green)
 ![Dataset](https://img.shields.io/badge/dataset-synthetic%20v2.1-lightgrey)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20774319.svg)](https://doi.org/10.5281/zenodo.20774319)
 
 </div>
 
@@ -102,6 +103,8 @@ The backend bridges to the AI service through an **integration adapter** (`ai-se
 ## 🧬 Dataset
 
 A fully synthetic, deterministically generated dataset (**v2.1**, 14,998 rows × 87 total columns: 74 engineered features, 3 categorical/metadata columns, and 10 labels). The exact CSV is byte-for-byte reproducible with `seed=42`. See [`dataset/`](dataset) and [`dataset/DATASET_CARD.md`](dataset/DATASET_CARD.md).
+
+📦 **Archived on Zenodo (CC BY 4.0):** [`10.5281/zenodo.20774319`](https://doi.org/10.5281/zenodo.20774319) · CSV SHA-256 `c1cfe9acbaf0e377a2a9dfe034f210857f8bda1964e5d6749c1df7b38de78300`
 
 ```bash
 cd dataset
